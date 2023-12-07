@@ -1,5 +1,5 @@
 [package]
-name = "io-error-ext"
+name = "io-extra"
 version = "0.1.0"
 edition = "2021"
 

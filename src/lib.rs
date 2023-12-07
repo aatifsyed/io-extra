@@ -1,14 +1,93 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+//! An extension trait for [`io::Error`], with shorthand constructors for various
+//! [`io::ErrorKind`]s.
+//!
+//! ```
+//! use std::io;
+//! use io_extra::IoErrorExt as _;
+//!
+//! fn check_magic_number(mut r: impl io::Read) -> io::Result<()> {
+//!     let mut buf = [0; 2];
+//!     r.read_exact(&mut buf)?;
+//!     match buf == 0xDEAD_u16.to_le_bytes() {
+//!         true => Ok(()),
+//!         false => Err(io::Error::invalid_data("unrecognised format"))
+//!     }
+//! }
+//! ```
+use sealed::Sealed;
+use std::{
+    error::Error,
+    io::{
+        self,
+        ErrorKind::{
+            AddrInUse, AddrNotAvailable, AlreadyExists, BrokenPipe, ConnectionAborted,
+            ConnectionRefused, ConnectionReset, Interrupted, InvalidData, InvalidInput,
+            NotConnected, NotFound, OutOfMemory, PermissionDenied, TimedOut, UnexpectedEof,
+            Unsupported, WouldBlock, WriteZero,
+        },
+    },
+};
+
+mod sealed {
+    pub trait Sealed {}
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+macro_rules! ctor {
+    ($($name:ident -> $kind:expr),* $(,)?) => {
+        $(
+            #[doc = concat!(
+                "Create an [`io::Error`] with kind [`",
+                stringify!($kind),
+                "`], wrapping the passed in `error`."
+            )]
+            fn $name(error: impl Into<Box<dyn Error + Send + Sync>>) -> io::Error {
+                io::Error::new($kind, error)
+            }
+        )*
+    };
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+/// An extension trait for [`io::Error`], with shorthand constructors for various
+/// [`io::ErrorKind`]s.
+///
+/// ```
+/// use std::io;
+/// use io_extra::IoErrorExt as _;
+///
+/// fn check_magic_number(mut r: impl io::Read) -> io::Result<()> {
+///     let mut buf = [0; 2];
+///     r.read_exact(&mut buf)?;
+///     match buf == 0xDEAD_u16.to_le_bytes() {
+///         true => Ok(()),
+///         false => Err(io::Error::invalid_data("unrecognised format"))
+///     }
+/// }
+/// ```
+///
+/// This trait is _sealed_, and cannot be implemented by types outside this library.
+pub trait IoErrorExt: Sealed {
+    ctor! {
+        addr_in_use -> AddrInUse,
+        addr_not_available -> AddrNotAvailable,
+        already_exists -> AlreadyExists,
+        broken_pipe -> BrokenPipe,
+        connection_aborted -> ConnectionAborted,
+        connection_refused -> ConnectionRefused,
+        connection_reset -> ConnectionReset,
+        interrupted -> Interrupted,
+        invalid_data -> InvalidData,
+        invalid_input -> InvalidInput,
+        not_connected -> NotConnected,
+        not_found -> NotFound,
+        out_of_memory -> OutOfMemory,
+        permission_denied -> PermissionDenied,
+        timed_out -> TimedOut,
+        unexpected_eof -> UnexpectedEof,
+        unsupported -> Unsupported,
+        would_block -> WouldBlock,
+        write_zero -> WriteZero,
     }
 }
+
+impl Sealed for io::Error {}
+impl IoErrorExt for io::Error {}
