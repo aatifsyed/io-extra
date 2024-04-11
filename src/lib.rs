@@ -1,5 +1,5 @@
 //! An extension trait for [`io::Error`], with shorthand constructors for various
-//! [`io::ErrorKind`]s.
+//! [`io::ErrorKind`]s, and a [`context()`] method.
 //!
 //! ```
 //! use std::io;
@@ -23,6 +23,7 @@
 use sealed::Sealed;
 use std::{
     error::Error,
+    fmt,
     io::{
         self,
         ErrorKind::{
@@ -34,8 +35,13 @@ use std::{
     },
 };
 
+#[doc(inline)]
+pub use context::context;
+
+mod context;
+
 mod sealed {
-    pub trait Sealed {}
+    pub trait Sealed: Into<std::io::Error> {}
 }
 
 macro_rules! ctor {
@@ -98,6 +104,18 @@ pub trait IoErrorExt: Sealed {
         unsupported -> Unsupported,
         would_block -> WouldBlock,
         write_zero -> WriteZero,
+    }
+    /// Attach a message to this error.
+    fn context(self, msg: impl fmt::Display) -> io::Error {
+        context(self.into(), msg)
+    }
+    /// Attach a message to this error.
+    ///
+    /// Provided with a different name to not conflict with [`anyhow::Context`].
+    ///
+    /// [`anyhow::Context`]: (https://docs.rs/anyhow/1/anyhow/trait.Context.html#method.context).
+    fn io_context(self, msg: impl fmt::Display) -> io::Error {
+        self.context(msg)
     }
 }
 
