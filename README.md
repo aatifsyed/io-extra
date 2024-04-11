@@ -1,7 +1,7 @@
 <!-- cargo-rdme start -->
 
 An extension trait for [`io::Error`], with shorthand constructors for various
-[`io::ErrorKind`]s.
+[`io::ErrorKind`]s, and a [`context()`] method.
 
 ```rust
 use std::io;
