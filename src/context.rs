@@ -1,5 +1,21 @@
 use std::{error::Error, fmt, io, iter};
 
+/// Lazily attach a message to an [`io::Error`].
+/// This is particularly useful combined with [`Result::map_err`].
+///
+/// ```
+/// use io_extra::with;
+/// # fn _main() -> Result<(), std::io::Error> {
+/// # use std::fs::File;
+/// # let path = "foo";
+/// File::open(path).map_err(with("failed to open log file"))?;
+/// # Ok(())
+/// # }
+/// ```
+pub fn with(context: impl fmt::Display) -> impl FnOnce(io::Error) -> io::Error {
+    |e| self::context(e, context)
+}
+
 /// Attach a message to this [`io::Error`].
 ///
 /// This is provided as a free function to not conflict with [`anyhow::Context`]
